@@ -23,6 +23,7 @@
 #include <string.h>
 
 #include "chipmunk/chipmunk_private.h"
+#include "cpBroadPhase.h"
 
 //MARK: Contact Set Helpers
 
@@ -102,9 +103,6 @@ cpCollisionHandler cpCollisionHandlerDoNothing = {
 	AlwaysCollide, AlwaysCollide, DoNothing, DoNothing, NULL
 };
 
-// function to get the estimated velocity of a shape for the cpBBTree.
-static cpVect ShapeVelocityFunc(cpShape *shape){return shape->body->v;}
-
 // Used for disposing of collision handlers.
 static void FreeWrap(void *ptr, void *unused){cpfree(ptr);}
 
@@ -141,9 +139,9 @@ cpSpaceInit(cpSpace *space)
 	space->stamp = 0;
 	
 	space->shapeIDCounter = 0;
-	space->staticShapes = cpBBTreeNew((cpSpatialIndexBBFunc)cpShapeGetBB, NULL);
-	space->dynamicShapes = cpBBTreeNew((cpSpatialIndexBBFunc)cpShapeGetBB, space->staticShapes);
-	cpBBTreeSetVelocityFunc(space->dynamicShapes, (cpBBTreeVelocityFunc)ShapeVelocityFunc);
+	// The broad phase is a replaceable cpSpatialIndex implementation.
+	// The default backend is the cell-based spatial hash.
+	cpBroadPhaseCreate(&space->staticShapes, &space->dynamicShapes, CP_BROADPHASE_SPATIAL_HASH);
 	
 	space->allocatedBuffers = cpArrayNew(0);
 	

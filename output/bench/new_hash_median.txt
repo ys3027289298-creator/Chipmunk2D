@@ -1,0 +1,16 @@
+=== sparse scenario (uniform spread, few overlaps) ===
+Initializing cpSpace - Chipmunk v7.0.3 (Debug Enabled)
+Compile with -DNDEBUG defined to disable debug mode and runtime assertion checks
+=== dense scenario (confined area, backend comparison, capped) ===
+LEAK WARNING: 1008328 bytes still live after all spaces freed
+sparse    250 shapes | hash | step avg    0.019 ms | live     460048 B | peak     460048 B | live/shape  1840.2 B
+sparse    500 shapes | hash | step avg    0.035 ms | live     591448 B | peak     591448 B | live/shape  1182.9 B
+sparse   1000 shapes | hash | step avg    0.049 ms | live     859120 B | peak     859120 B | live/shape   859.1 B
+sparse   2000 shapes | hash | step avg    0.095 ms | live    1461280 B | peak    1461280 B | live/shape   730.6 B
+sparse   4000 shapes | hash | step avg    0.216 ms | live    2619288 B | peak    2619288 B | live/shape   654.8 B
+sparse   8000 shapes | hash | step avg    0.530 ms | live    5020112 B | peak    5020112 B | live/shape   627.5 B
+sparse  16000 shapes | hash | step avg    1.296 ms | live    9832696 B | peak    9832696 B | live/shape   614.5 B
+dense     250 shapes | hash | step avg    0.032 ms | live     462128 B | peak     462128 B | live/shape  1848.5 B
+dense     500 shapes | hash | step avg    0.119 ms | live     760568 B | peak     760568 B | live/shape  1521.1 B
+dense    1000 shapes | hash | step avg    0.379 ms | live    1471456 B | peak    1471456 B | live/shape  1471.5 B
+dense    2000 shapes | hash | step avg    1.283 ms | live    3347928 B | peak    3347928 B | live/shape  1674.0 B

@@ -269,11 +269,14 @@ hashHandle(cpSpaceHash *hash, cpHandle *hand, cpBB bb)
 
 //MARK: Basic Operations
 
+static void cpSpaceHashGrowIfNeeded(cpSpaceHash *hash);
+
 static void
 cpSpaceHashInsert(cpSpaceHash *hash, void *obj, cpHashValue hashid)
 {
 	cpHandle *hand = (cpHandle *)cpHashSetInsert(hash->handleSet, hashid, obj, (cpHashSetTransFunc)handleSetTrans, hash);
 	hashHandle(hash, hand, hash->spatialIndex.bbfunc(obj));
+	cpSpaceHashGrowIfNeeded(hash);
 }
 
 static void
@@ -293,6 +296,23 @@ static void
 rehash_helper(cpHandle *hand, cpSpaceHash *hash)
 {
 	hashHandle(hash, hand, hash->spatialIndex.bbfunc(hand->obj));
+}
+
+// Grow the cell table so that its size stays proportional to the number of
+// indexed objects. Combined with the per-object handles this keeps the total
+// memory of the index linear in the number of shapes. The rebuilt table is
+// populated by rehashing every object against its current bounding box.
+static void
+cpSpaceHashGrowIfNeeded(cpSpaceHash *hash)
+{
+	int count = cpHashSetCount(hash->handleSet);
+
+	// Keep the load factor at or below one object per cell.
+	if(count <= hash->numcells) return;
+
+	clearTable(hash);
+	cpSpaceHashAllocTable(hash, count);
+	cpHashSetEach(hash->handleSet, (cpHashSetIteratorFunc)rehash_helper, hash);
 }
 
 static void

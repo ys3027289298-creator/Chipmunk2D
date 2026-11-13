@@ -1,0 +1,6 @@
+{"version":3,"term":{"cols":80,"rows":24},"timestamp":1794557423,"command":"bash /home/ys/feedback/uidreczz28Z50mpcrxT/output/recording/segments/01_build.sh","env":{"SHELL":"/bin/bash"}}
+[0.013, "o", "\u001b[1;36m\r\n########################################################################\r\n# SEGMENT 1/5: BUILD REFACTORED LIBRARY\r\n"]
+[0.002, "o", "########################################################################\r\n\u001b[0m\r\n"]
+[0.117, "o", "[100%] Built target chipmunk_static\r\n"]
+[0.000, "o", "\r\n[segment done]\r\n"]
+[0.001, "x", "0"]

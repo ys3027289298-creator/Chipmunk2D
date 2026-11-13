@@ -1,0 +1,5 @@
+{"version":3,"term":{"cols":80,"rows":24},"timestamp":1794557423,"command":"bash /home/ys/feedback/uidreczz28Z50mpcrxT/output/recording/segments/03_cross_binary.sh","env":{"SHELL":"/bin/bash"}}
+[0.008, "o", "\u001b[1;36m\r\n########################################################################\r\n"]
+[0.001, "o", "# SEGMENT 3/5: CROSS-BINARY TRACE vs PRISTINE BASELINE\r\n########################################################################\r\n\u001b[0m\r\n"]
+[0.006, "o", "PAIR TRACES IDENTICAL\r\n\r\n[segment done]\r\n"]
+[0.001, "x", "0"]

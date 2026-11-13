@@ -1,0 +1,84 @@
+Chipmunk broad-phase refactor acceptance run
+date: 2026-11-13 08:16:59 UTC
+refactored tree: /home/ys/feedback/uidreczz28Z50mpcrxT
+baseline tree:    /tmp/chipmunk-baseline
+
+================================================================
+== equivalence in-process (new lib: hash vs tree)
+================================================================
+scenario: 400 dynamic shapes, 60 steps, 1736 total pair-snapshots
+PASS: spatial-hash and AABB-tree produced identical pair sets and callback sequences
+>>> PASS: equivalence in-process (new lib: hash vs tree)
+
+================================================================
+== cross-binary pair/callback trace equivalence
+================================================================
+>>> PASS: cross-binary traces identical
+
+================================================================
+== degenerate input rejection (new, Release)
+================================================================
+ok   zero-radius circle           -> rejected
+ok   negative-radius circle       -> rejected
+ok   NaN-radius circle            -> rejected
+ok   NaN-offset circle            -> rejected
+ok   identical segment endpoints  -> rejected
+ok   NaN segment endpoint         -> rejected
+ok   polygon with < 3 verts       -> rejected
+ok   polygon with coincident verts -> rejected
+ok   polygon with collinear verts -> rejected
+ok   polygon with NaN verts       -> rejected
+ok   valid circle                 -> accepted
+ok   valid zero-radius segment    -> accepted
+ok   valid polygon                -> accepted
+PASS: all degenerate inputs rejected and all valid inputs accepted
+>>> PASS: degenerate input rejection (new, Release)
+
+================================================================
+== runtime backend hot-swap preserves shapes
+================================================================
+default dyn=301 static=0
+after swap->tree dyn=301 static=0
+after swap->hash dyn=301 static=0
+arbiters hash=20 tree=20 final=20 (migrated shapes preserved)
+freed ok
+>>> PASS: runtime backend hot-swap preserves shapes
+
+================================================================
+== degenerate input rejection (new, Debug)
+================================================================
+ok   zero-radius circle           -> rejected
+ok   negative-radius circle       -> rejected
+ok   NaN-radius circle            -> rejected
+ok   NaN-offset circle            -> rejected
+ok   identical segment endpoints  -> rejected
+ok   NaN segment endpoint         -> rejected
+ok   polygon with < 3 verts       -> rejected
+ok   polygon with coincident verts -> rejected
+ok   polygon with collinear verts -> rejected
+ok   polygon with NaN verts       -> rejected
+ok   valid circle                 -> accepted
+ok   valid zero-radius segment    -> accepted
+ok   valid polygon                -> accepted
+PASS: all degenerate inputs rejected and all valid inputs accepted
+>>> PASS: degenerate input rejection (new, Debug)
+
+================================================================
+== baseline degenerate handling (expected to accept invalid input)
+================================================================
+FAIL zero-radius circle           expected REJECT, got ACCEPT
+FAIL negative-radius circle       expected REJECT, got ACCEPT
+FAIL NaN-radius circle            expected REJECT, got ACCEPT
+FAIL NaN-offset circle            expected REJECT, got ACCEPT
+FAIL identical segment endpoints  expected REJECT, got ACCEPT
+FAIL NaN segment endpoint         expected REJECT, got ACCEPT
+FAIL polygon with < 3 verts       expected REJECT, got ACCEPT
+FAIL polygon with coincident verts expected REJECT, got ACCEPT
+FAIL polygon with collinear verts expected REJECT, got ACCEPT
+FAIL polygon with NaN verts       expected REJECT, got ACCEPT
+ok   valid circle                 -> accepted
+ok   valid zero-radius segment    -> accepted
+ok   valid polygon                -> accepted
+RESULT: 10 failures
+
+summary: 5 passed, 0 failed

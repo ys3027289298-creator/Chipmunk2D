@@ -21,6 +21,7 @@
 
 #include "chipmunk/chipmunk_private.h"
 #include "chipmunk/chipmunk_unsafe.h"
+#include "cpValidate.h"
 
 cpPolyShape *
 cpPolyShapeAlloc(void)
@@ -190,18 +191,44 @@ static const cpShapeClass polyClass = {
 cpPolyShape *
 cpPolyShapeInit(cpPolyShape *poly, cpBody *body, int count, const cpVect *verts, cpTransform transform, cpFloat radius)
 {
+	cpAssertHard(count >= 3, "Polygon shapes require at least 3 vertices.");
+	cpAssertHard(cpIsFinite(radius) && radius >= 0.0f, "Polygon shape radius must be a finite non-negative number.");
+
 	cpVect *hullVerts = (cpVect *)alloca(count*sizeof(cpVect));
 	
 	// Transform the verts before building the hull in case of a negative scale.
 	for(int i=0; i<count; i++) hullVerts[i] = cpTransformPoint(transform, verts[i]);
+
+	// Reject non-finite or coincident input vertices explicitly. The convex
+	// hull routine silently drops duplicate points, which would otherwise turn
+	// an invalid vertex set into a smaller polygon instead of failing.
+	for(int i=0; i<count; i++){
+		cpAssertHard(cpIsFinite(hullVerts[i].x) && cpIsFinite(hullVerts[i].y),
+			"Polygon shape vertices must contain finite coordinates.");
+		for(int j=0; j<i; j++){
+			cpAssertHard(!cpveql(hullVerts[i], hullVerts[j]),
+				"Polygon shape vertices must not contain duplicate points.");
+		}
+	}
 	
 	unsigned int hullCount = cpConvexHull(count, hullVerts, hullVerts, NULL, 0.0);
+	cpAssertHard(hullCount >= 3, "Polygon shape vertices are degenerate (collinear, coincident or non-finite).");
+
 	return cpPolyShapeInitRaw(poly, body, hullCount, hullVerts, radius);
 }
 
 cpPolyShape *
 cpPolyShapeInitRaw(cpPolyShape *poly, cpBody *body, int count, const cpVect *verts, cpFloat radius)
 {
+	cpAssertHard(count >= 3, "Polygon shapes require at least 3 vertices.");
+	cpAssertHard(cpIsFinite(radius) && radius >= 0.0f, "Polygon shape radius must be a finite non-negative number.");
+	for(int i=0; i<count; i++){
+		cpAssertHard(cpIsFinite(verts[i].x) && cpIsFinite(verts[i].y), "Polygon shape vertices must contain finite coordinates.");
+		for(int j=0; j<i; j++){
+			cpAssertHard(!cpveql(verts[i], verts[j]), "Polygon shape vertices must not contain duplicate points.");
+		}
+	}
+
 	cpShapeInit((cpShape *)poly, &polyClass, body, cpPolyShapeMassInfo(0.0f, count, verts, radius));
 	
 	SetVerts(poly, count, verts);

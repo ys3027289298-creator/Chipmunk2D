@@ -1,0 +1,6 @@
+{"version":3,"term":{"cols":80,"rows":24},"timestamp":1794557423,"command":"bash /home/ys/feedback/uidreczz28Z50mpcrxT/output/recording/segments/02_equivalence.sh","env":{"SHELL":"/bin/bash"}}
+[0.006, "o", "\u001b[1;36m\r\n########################################################################\r\n# SEGMENT 2/5: COLLISION PAIR EQUIVALENCE (hash vs tree)\r\n########################################################################\r\n\u001b[0m\r\n"]
+[0.010, "o", "scenario: 400 dynamic shapes, 60 steps, 1736 total pair-snapshots\r\n"]
+[0.000, "o", "PASS: spatial-hash and AABB-tree produced identical pair sets and callback sequences\r\n"]
+[0.001, "o", "\r\n[segment done]\r\n"]
+[0.000, "x", "0"]

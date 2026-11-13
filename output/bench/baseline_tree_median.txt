@@ -1,0 +1,16 @@
+=== sparse scenario (uniform spread, few overlaps) ===
+Initializing cpSpace - Chipmunk v7.0.3 (Debug Enabled)
+Compile with -DNDEBUG defined to disable debug mode and runtime assertion checks
+=== dense scenario (confined area, backend comparison, capped) ===
+LEAK WARNING: 1008328 bytes still live after all spaces freed
+sparse    250 shapes | tree | step avg    0.013 ms | live     431560 B | peak     431560 B | live/shape  1726.2 B
+sparse    500 shapes | tree | step avg    0.022 ms | live     594832 B | peak     594832 B | live/shape  1189.7 B
+sparse   1000 shapes | tree | step avg    0.045 ms | live     924064 B | peak     924064 B | live/shape   924.1 B
+sparse   2000 shapes | tree | step avg    0.076 ms | live    1616568 B | peak    1616568 B | live/shape   808.3 B
+sparse   4000 shapes | tree | step avg    0.161 ms | live    2955216 B | peak    2955216 B | live/shape   738.8 B
+sparse   8000 shapes | tree | step avg    0.311 ms | live    5684664 B | peak    5684664 B | live/shape   710.6 B
+sparse  16000 shapes | tree | step avg    0.697 ms | live   11121424 B | peak   11121424 B | live/shape   695.1 B
+dense     250 shapes | tree | step avg    0.030 ms | live     433640 B | peak     433640 B | live/shape  1734.6 B
+dense     500 shapes | tree | step avg    0.098 ms | live     796720 B | peak     796720 B | live/shape  1593.4 B
+dense    1000 shapes | tree | step avg    0.402 ms | live    1634744 B | peak    1634744 B | live/shape  1634.7 B
+dense    2000 shapes | tree | step avg    1.164 ms | live    3798184 B | peak    3798184 B | live/shape  1899.1 B

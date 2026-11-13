@@ -1,0 +1,9 @@
+initial dynamic cells=389
+after    256 shapes: cells=389 (cells/n=1.520)
+after    257 shapes: cells=389 (cells/n=1.514)
+after    500 shapes: cells=500 (cells/n=1.000)
+after   1000 shapes: cells=1000 (cells/n=1.000)
+after   2000 shapes: cells=2000 (cells/n=1.000)
+after   4000 shapes: cells=4000 (cells/n=1.000)
+after   8000 shapes: cells=8000 (cells/n=1.000)
+after  16000 shapes: cells=16000 (cells/n=1.000)

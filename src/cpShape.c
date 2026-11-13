@@ -21,6 +21,7 @@
 
 #include "chipmunk/chipmunk_private.h"
 #include "chipmunk/chipmunk_unsafe.h"
+#include "cpValidate.h"
 
 #define CP_DefineShapeGetter(struct, type, member, name) \
 CP_DeclareShapeGetter(struct, type, name){ \
@@ -340,6 +341,9 @@ static const cpShapeClass cpCircleShapeClass = {
 cpCircleShape *
 cpCircleShapeInit(cpCircleShape *circle, cpBody *body, cpFloat radius, cpVect offset)
 {
+	cpAssertHard(cpIsFinite(radius) && radius > 0.0f, "Circle shape radius must be a finite positive number.");
+	cpAssertHard(cpIsFinite(offset.x) && cpIsFinite(offset.y), "Circle shape offset must contain finite coordinates.");
+
 	circle->c = offset;
 	circle->r = radius;
 	
@@ -487,6 +491,13 @@ static const cpShapeClass cpSegmentShapeClass = {
 cpSegmentShape *
 cpSegmentShapeInit(cpSegmentShape *seg, cpBody *body, cpVect a, cpVect b, cpFloat r)
 {
+	cpAssertHard(cpIsFinite(r) && r >= 0.0f, "Segment shape radius must be a finite non-negative number.");
+	cpAssertHard(
+		cpIsFinite(a.x) && cpIsFinite(a.y) && cpIsFinite(b.x) && cpIsFinite(b.y),
+		"Segment shape endpoints must contain finite coordinates."
+	);
+	cpAssertHard(!cpveql(a, b), "Segment shape endpoints must not be identical.");
+
 	seg->a = a;
 	seg->b = b;
 	seg->n = cpvrperp(cpvnormalize(cpvsub(b, a)));
