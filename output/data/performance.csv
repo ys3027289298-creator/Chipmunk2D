@@ -1,0 +1,7 @@
+# Performance benchmark (us per cpSpaceStep, lower is better)
+# gcc -O2 -fno-fast-math, 9 runs x 3000 steps each, best-of-repeat timing
+# column: 10-box vertical stack (30 iters); pyramid: 36-box pyramid (30 iters)
+scene,baseline_mean,refactor_mean,delta_pct
+column,11.6722,11.6589,-0.11%
+pyramid,64.4008,66.5277,3.30%
+# pyramid round-by-round means (us): base 64.95/70.30/62.93 vs ref 66.30/64.22/62.22 -> crossover, within run-to-run noise

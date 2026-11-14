@@ -98,8 +98,18 @@ void cpArbiterUnthread(cpArbiter *arb);
 
 void cpArbiterUpdate(cpArbiter *arb, struct cpCollisionInfo *info, cpSpace *space);
 void cpArbiterPreStep(cpArbiter *arb, cpFloat dt, cpFloat bias, cpFloat slop);
+// Split position-correction variant: penetration is solved with independent
+// pseudo-impulses instead of Baumgarte bias velocities.
+void cpArbiterPreStepSplit(cpArbiter *arb, cpFloat dt, cpFloat slop,
+	cpFloat correctionRate, cpFloat maxCorrectionSpeed);
 void cpArbiterApplyCachedImpulse(cpArbiter *arb, cpFloat dt_coef);
 void cpArbiterApplyImpulse(cpArbiter *arb);
+// Same impulse update as cpArbiterApplyImpulse() but returning the largest
+// post-solve normal contact velocity residual for convergence monitoring.
+cpFloat cpArbiterApplyImpulseResidual(cpArbiter *arb);
+// Split-correction impulse update. Physical velocity and positional
+// pseudo-velocity are accumulated independently.
+cpFloat cpArbiterApplyImpulseSplit(cpArbiter *arb);
 
 
 //MARK: Shapes/Collisions
@@ -313,6 +323,15 @@ cpSpaceArrayForBodyType(cpSpace *space, cpBodyType type)
 
 void cpShapeUpdateFunc(cpShape *shape, void *unused);
 cpCollisionID cpSpaceCollideShapes(cpShape *a, cpShape *b, cpCollisionID id, cpSpace *space);
+
+//MARK: Solver Pipeline (cpSolver.c)
+
+void cpSolverReportError(cpSpace *space, cpSolverError error);
+void cpSolverValidateBodies(cpSpace *space);
+void cpSolverValidateArbiters(cpSpace *space);
+void cpSolverPrestepArbiters(cpSpace *space, cpFloat dt, cpFloat biasCoef);
+void cpSolverWarmStart(cpSpace *space, cpFloat dtCoef);
+void cpSolverRunIterations(cpSpace *space);
 
 
 //MARK: Foreach loops

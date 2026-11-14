@@ -220,6 +220,13 @@ ComponentActive(cpBody *root, cpFloat threshold)
 void
 cpSpaceProcessComponents(cpSpace *space, cpFloat dt)
 {
+	// A finite sleep threshold enables sleeping; the INFINITY sentinel means
+	// sleeping is disabled. The build explicitly passes -fno-fast-math because
+	// -ffinite-math-only would fold this comparison (see cpSolver.c and the
+	// build notes in output/docs/design.md).
+#if defined(__FAST_MATH__)
+	#error "Chipmunk2D must be compiled without -ffast-math: INFINITY/NaN sentinel tests would be miscompiled."
+#endif
 	cpBool sleep = (space->sleepTimeThreshold != INFINITY);
 	cpArray *bodies = space->dynamicBodies;
 	

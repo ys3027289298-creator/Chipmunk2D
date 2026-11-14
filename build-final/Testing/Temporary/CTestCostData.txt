@@ -1,0 +1,4 @@
+solver_verify 3 0.0742207
+solver_modes 3 0.0396478
+solver_diagnostics 3 0.000759711
+---

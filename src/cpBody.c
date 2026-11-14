@@ -103,25 +103,40 @@ cpBodyFree(cpBody *body)
 #ifdef NDEBUG
 	#define	cpAssertSaneBody(body)
 #else
-	static void cpv_assert_nan(cpVect v, const char *message){cpAssertHard(v.x == v.x && v.y == v.y, message);}
-	static void cpv_assert_infinite(cpVect v, const char *message){cpAssertHard(cpfabs(v.x) != INFINITY && cpfabs(v.y) != INFINITY, message);}
-	static void cpv_assert_sane(cpVect v, const char *message){cpv_assert_nan(v, message); cpv_assert_infinite(v, message);}
+	static cpBool cpv_is_nan(cpVect v){return !(v.x == v.x && v.y == v.y);}
+	static cpBool cpv_is_infinite(cpVect v){return (cpfabs(v.x) == INFINITY || cpfabs(v.y) == INFINITY);}
 	
 	static void
 	cpBodySanityCheck(const cpBody *body)
 	{
-		cpAssertHard(body->m == body->m && body->m_inv == body->m_inv, "Body's mass is NaN.");
-		cpAssertHard(body->i == body->i && body->i_inv == body->i_inv, "Body's moment is NaN.");
-		cpAssertHard(body->m >= 0.0f, "Body's mass is negative.");
-		cpAssertHard(body->i >= 0.0f, "Body's moment is negative.");
-		
-		cpv_assert_sane(body->p, "Body's position is invalid.");
-		cpv_assert_sane(body->v, "Body's velocity is invalid.");
-		cpv_assert_sane(body->f, "Body's force is invalid.");
+		cpBool badMass = !(body->m == body->m && body->m_inv == body->m_inv &&
+		                  body->i == body->i && body->i_inv == body->i_inv) ||
+		                 body->m < 0.0f || body->i < 0.0f;
+		cpBool nanState = body->a != body->a || body->w != body->w ||
+		                  body->t != body->t ||
+		                  cpv_is_nan(body->p) || cpv_is_nan(body->v) || cpv_is_nan(body->f);
+		cpBool infState = cpfabs(body->a) == INFINITY ||
+		                  cpfabs(body->w) == INFINITY || cpfabs(body->t) == INFINITY ||
+		                  cpv_is_infinite(body->p) || cpv_is_infinite(body->v) ||
+		                  cpv_is_infinite(body->f);
 
-		cpAssertHard(body->a == body->a && cpfabs(body->a) != INFINITY, "Body's angle is invalid.");
-		cpAssertHard(body->w == body->w && cpfabs(body->w) != INFINITY, "Body's angular velocity is invalid.");
-		cpAssertHard(body->t == body->t && cpfabs(body->t) != INFINITY, "Body's torque is invalid.");
+		// Bodies already owned by a space feed the diagnostics pipeline instead
+		// of aborting, so numerical faults become reportable error codes.
+		if(body->space){
+			if(badMass) cpSolverReportError(body->space, CP_SOLVER_INVALID_MASS);
+			if(nanState) cpSolverReportError(body->space, CP_SOLVER_NAN_BODY);
+			if(infState) cpSolverReportError(body->space, CP_SOLVER_INFINITE_BODY);
+			return;
+		}
+
+		// A body not yet attached to a space may carry an explicitly injected
+		// bad mass (the setter already warned). It is diagnosed later once the
+		// body enters a space, so do not abort here either.
+		if(badMass) return;
+
+		cpAssertHard(!badMass, "Body's mass or moment is invalid.");
+		cpAssertHard(!nanState, "Body's position/velocity/force contains NaN.");
+		cpAssertHard(!infState, "Body's position/velocity/force is infinite.");
 	}
 	
 	#define	cpAssertSaneBody(body) cpBodySanityCheck(body)
@@ -254,7 +269,16 @@ void
 cpBodySetMass(cpBody *body, cpFloat mass)
 {
 	cpAssertHard(cpBodyGetType(body) == CP_BODY_TYPE_DYNAMIC, "You cannot set the mass of kinematic or static bodies.");
-	cpAssertHard(0.0f <= mass && mass < INFINITY, "Mass must be positive and finite.");
+	// Numerical problems are recorded by the solver diagnostics instead of
+	// aborting the host process. A NaN or non-finite inverse mass neutralizes
+	// the body dynamically; the condition is flagged during cpSpaceStep().
+	if(!(0.0f <= mass && mass < INFINITY)){
+		cpMessage("0.0f <= mass && mass < INFINITY", __FILE__, __LINE__, 0, 0,
+			"Mass must be positive and finite; invalid mass retained for diagnostics.");
+		body->m = mass;
+		body->m_inv = (mass > 0.0f && mass == mass && mass < INFINITY) ? 1.0f/mass : 0.0f;
+		return;
+	}
 	
 	cpBodyActivate(body);
 	body->m = mass;
@@ -271,7 +295,13 @@ cpBodyGetMoment(const cpBody *body)
 void
 cpBodySetMoment(cpBody *body, cpFloat moment)
 {
-	cpAssertHard(moment >= 0.0f, "Moment of Inertia must be positive.");
+	if(!(moment >= 0.0f)){
+		cpMessage("moment >= 0.0f", __FILE__, __LINE__, 0, 0,
+			"Moment of Inertia must be positive; invalid moment retained for diagnostics.");
+		body->i = moment;
+		body->i_inv = 0.0f;
+		return;
+	}
 	
 	cpBodyActivate(body);
 	body->i = moment;
@@ -496,7 +526,12 @@ cpBodyUpdateVelocity(cpBody *body, cpVect gravity, cpFloat damping, cpFloat dt)
 	// Skip kinematic bodies.
 	if(cpBodyGetType(body) == CP_BODY_TYPE_KINEMATIC) return;
 	
-	cpAssertSoft(body->m > 0.0f && body->i > 0.0f, "Body's mass and moment must be positive to simulate. (Mass: %f Moment: %f)", body->m, body->i);
+	// Invalid mass is a reportable diagnostic, not a fatal error. The zeroed
+	// inverse mass makes the integration below a no-op for this body.
+	if(!(body->m > 0.0f && body->i > 0.0f)){
+		if(body->space) cpSolverReportError(body->space, CP_SOLVER_INVALID_MASS);
+		return;
+	}
 	
 	body->v = cpvadd(cpvmult(body->v, damping), cpvmult(cpvadd(gravity, cpvmult(body->f, body->m_inv)), dt));
 	body->w = body->w*damping + body->t*body->i_inv*dt;

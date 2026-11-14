@@ -1,0 +1,11 @@
+=== cp_solver_diagnostics start ===
+PASS: NaN mass reported as CP_SOLVER_INVALID_MASS
+PASS: clear returns previous error
+PASS: error resets to CP_SOLVER_OK after clear
+PASS: 1e18 mass ratio reported as CP_SOLVER_EXTREME_MASS_RATIO
+PASS: error name round trips through cpSolverErrorName
+PASS: healthy scene reports CP_SOLVER_OK
+PASS: callback not fired for healthy scene
+PASS: callback fires with CP_SOLVER_INVALID_MASS on NaN body
+PASS: sticky error flag set on invalid body
+=== cp_solver_diagnostics done: 0 failure(s) ===

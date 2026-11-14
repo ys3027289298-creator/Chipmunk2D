@@ -1,0 +1,6 @@
+=== cp_solver_modes start ===
+MODE,legacy,column,residualSpeed=0.006009216,maxResidualSpeed=0.036029888,settleDrift=0.004119256,maxPenetration=0.002820424,jitterEnergy=0.000054529,lastIters=30,lastResidual=0.000000000,error=0
+MODE,stable,column,residualSpeed=0.005981269,maxResidualSpeed=0.035941473,settleDrift=0.004112720,maxPenetration=0.002820132,jitterEnergy=0.000054368,lastIters=30,lastResidual=0.000058934,error=0
+MODE,legacy,pyramid,residualSpeed=0.000000000,maxResidualSpeed=0.000000000,settleDrift=0.165309681,maxPenetration=0.388708173,jitterEnergy=0.844202884,lastIters=30,lastResidual=0.000000000,error=0
+MODE,stable,pyramid,residualSpeed=0.000000193,maxResidualSpeed=0.000002475,settleDrift=0.165309524,maxPenetration=0.388708165,jitterEnergy=0.844202885,lastIters=1,lastResidual=0.000000009,error=0
+=== cp_solver_modes done ===

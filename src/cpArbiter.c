@@ -457,6 +457,98 @@ cpArbiterApplyCachedImpulse(cpArbiter *arb, cpFloat dt_coef)
 // TODO: is it worth splitting velocity/position correction?
 
 void
+cpArbiterPreStepSplit(cpArbiter *arb, cpFloat dt, cpFloat slop,
+	cpFloat correctionRate, cpFloat maxCorrectionSpeed)
+{
+	cpBody *a = arb->body_a;
+	cpBody *b = arb->body_b;
+	cpVect n = arb->n;
+	cpVect body_delta = cpvsub(b->p, a->p);
+
+	for(int i = 0; i < arb->count; i++){
+		struct cpContact *con = &arb->contacts[i];
+
+		// Effective masses are identical to the legacy path.
+		con->nMass = 1.0f/k_scalar(a, b, con->r1, con->r2, n);
+		con->tMass = 1.0f/k_scalar(a, b, con->r1, con->r2, cpvperp(n));
+
+		// Position correction is expressed directly as a pseudo-velocity
+		// target instead of being injected into the physical velocity solve.
+		cpFloat dist = cpvdot(cpvadd(cpvsub(con->r2, con->r1), body_delta), n);
+		cpFloat penetration = cpfmax(-(dist - slop), 0.0f);
+		cpFloat correction = correctionRate * penetration / dt;
+		if(maxCorrectionSpeed > 0.0f){
+			correction = cpfmin(correction, maxCorrectionSpeed);
+		}
+		con->bias = -correction;
+		con->jBias = 0.0f;
+
+		// Bounce handling is unchanged.
+		con->bounce = normal_relative_velocity(a, b, con->r1, con->r2, n)*arb->e;
+	}
+}
+
+// Residual-measuring variant of cpArbiterApplyImpulse(). The impulse
+// arithmetic is identical to the legacy routine; the normal relative velocity
+// is recomputed afterwards purely for convergence monitoring and never feeds
+// back into the solver state.
+cpFloat
+cpArbiterApplyImpulseResidual(cpArbiter *arb)
+{
+	cpBody *a = arb->body_a;
+	cpBody *b = arb->body_b;
+	cpVect n = arb->n;
+	cpVect surface_vr = arb->surface_vr;
+	cpFloat friction = arb->u;
+	cpFloat maxResidual = 0.0;
+
+	for(int i=0; i<arb->count; i++){
+		struct cpContact *con = &arb->contacts[i];
+		cpFloat nMass = con->nMass;
+		cpVect r1 = con->r1;
+		cpVect r2 = con->r2;
+
+		cpVect vb1 = cpvadd(a->v_bias, cpvmult(cpvperp(r1), a->w_bias));
+		cpVect vb2 = cpvadd(b->v_bias, cpvmult(cpvperp(r2), b->w_bias));
+		cpVect vr = cpvadd(relative_velocity(a, b, r1, r2), surface_vr);
+
+		cpFloat vbn = cpvdot(cpvsub(vb2, vb1), n);
+		cpFloat vrn = cpvdot(vr, n);
+		cpFloat vrt = cpvdot(vr, cpvperp(n));
+
+		cpFloat jbn = (con->bias - vbn)*nMass;
+		cpFloat jbnOld = con->jBias;
+		con->jBias = cpfmax(jbnOld + jbn, 0.0f);
+
+		cpFloat jn = -(con->bounce + vrn)*nMass;
+		cpFloat jnOld = con->jnAcc;
+		con->jnAcc = cpfmax(jnOld + jn, 0.0f);
+
+		cpFloat jtMax = friction*con->jnAcc;
+		cpFloat jt = -vrt*con->tMass;
+		cpFloat jtOld = con->jtAcc;
+		con->jtAcc = cpfclamp(jtOld + jt, -jtMax, jtMax);
+
+		apply_bias_impulses(a, b, r1, r2, cpvmult(n, con->jBias - jbnOld));
+		apply_impulses(a, b, r1, r2, cpvrotate(n, cpv(con->jnAcc - jnOld, con->jtAcc - jtOld)));
+
+		cpFloat residual = cpfabs(cpvdot(relative_velocity(a, b, r1, r2), n));
+		if(residual > maxResidual) maxResidual = residual;
+	}
+
+	return maxResidual;
+}
+
+cpFloat
+cpArbiterApplyImpulseSplit(cpArbiter *arb)
+{
+	// Pseudo-velocity accumulation shares the impulse arithmetic of the
+	// Baumgarte path; only the bias target built in cpArbiterPreStepSplit()
+	// differs, so the same iteration body drives both correction strategies.
+	return cpArbiterApplyImpulseResidual(arb);
+}
+
+void
 cpArbiterApplyImpulse(cpArbiter *arb)
 {
 	cpBody *a = arb->body_a;
@@ -470,28 +562,28 @@ cpArbiterApplyImpulse(cpArbiter *arb)
 		cpFloat nMass = con->nMass;
 		cpVect r1 = con->r1;
 		cpVect r2 = con->r2;
-		
+
 		cpVect vb1 = cpvadd(a->v_bias, cpvmult(cpvperp(r1), a->w_bias));
 		cpVect vb2 = cpvadd(b->v_bias, cpvmult(cpvperp(r2), b->w_bias));
 		cpVect vr = cpvadd(relative_velocity(a, b, r1, r2), surface_vr);
-		
+
 		cpFloat vbn = cpvdot(cpvsub(vb2, vb1), n);
 		cpFloat vrn = cpvdot(vr, n);
 		cpFloat vrt = cpvdot(vr, cpvperp(n));
-		
+
 		cpFloat jbn = (con->bias - vbn)*nMass;
 		cpFloat jbnOld = con->jBias;
 		con->jBias = cpfmax(jbnOld + jbn, 0.0f);
-		
+
 		cpFloat jn = -(con->bounce + vrn)*nMass;
 		cpFloat jnOld = con->jnAcc;
 		con->jnAcc = cpfmax(jnOld + jn, 0.0f);
-		
+
 		cpFloat jtMax = friction*con->jnAcc;
 		cpFloat jt = -vrt*con->tMass;
 		cpFloat jtOld = con->jtAcc;
 		con->jtAcc = cpfclamp(jtOld + jt, -jtMax, jtMax);
-		
+
 		apply_bias_impulses(a, b, r1, r2, cpvmult(n, con->jBias - jbnOld));
 		apply_impulses(a, b, r1, r2, cpvrotate(n, cpv(con->jnAcc - jnOld, con->jtAcc - jtOld)));
 	}

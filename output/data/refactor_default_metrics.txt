@@ -1,0 +1,10 @@
+=== cp_solver_verify start ===
+METRICS,S1_column,residualSpeed=0.006009216,maxResidualSpeed=0.036029888,settleDrift=0.004119256,maxPenetration=0.002820424,jitterEnergy=0.000054529
+METRICS,S2_pyramid,residualSpeed=0.000000000,maxResidualSpeed=0.000000000,settleDrift=0.165309681,maxPenetration=0.388708173,jitterEnergy=0.844202884
+METRICS,S3_projectile,trajRmseVsAnalytic=0.951497041,maxErr=1.487952047
+METRICS,S4_stack_traj,repeatRmse=0.000000000000,repeatMaxErr=0.000000000000
+METRICS,S5_timing,bestSeconds=0.022161669,steps=2000,usPerStep=11.080835
+METRICS,S6_nan_mass,errorCode=3,errorName=CP_SOLVER_INVALID_MASS
+METRICS,S6_extreme_mass,errorCode=5,errorName=CP_SOLVER_EXTREME_MASS_RATIO
+METRICS,S6_healthy,errorCode=0,errorName=CP_SOLVER_OK
+=== cp_solver_verify done ===

@@ -395,6 +395,13 @@ typedef void (*cpSpaceArbiterApplyImpulseFunc)(cpArbiter *arb);
 
 struct cpSpace {
 	int iterations;
+
+	// Unified solver pipeline configuration (iterations / warm start /
+	// position correction) plus sticky numerical diagnostics.
+	cpSolverConfig solverConfig;
+	cpSolverError lastSolverError;
+	int lastIterationCount;
+	cpFloat lastResidualVelocity;
 	
 	cpVect gravity;
 	cpFloat damping;

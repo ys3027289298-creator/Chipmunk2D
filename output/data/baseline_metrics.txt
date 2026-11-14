@@ -1,0 +1,10 @@
+=== cp_solver_verify start ===
+METRICS,S1_column,residualSpeed=0.006009216,maxResidualSpeed=0.036029888,settleDrift=0.004119256,maxPenetration=0.002820424,jitterEnergy=0.000054529
+METRICS,S2_pyramid,residualSpeed=0.000000000,maxResidualSpeed=0.000000000,settleDrift=0.165309681,maxPenetration=0.388708173,jitterEnergy=0.844202884
+METRICS,S3_projectile,trajRmseVsAnalytic=0.951497041,maxErr=1.487952047
+METRICS,S4_stack_traj,repeatRmse=0.000000000000,repeatMaxErr=0.000000000000
+METRICS,S5_timing,bestSeconds=0.021283517,steps=2000,usPerStep=10.641759
+METRICS,S6_nan_mass,errorCode=-1,errorName=BASELINE_ABORTS_NO_DIAGNOSTICS
+METRICS,S6_extreme_mass,errorCode=-1,errorName=BASELINE_ABORTS_NO_DIAGNOSTICS
+METRICS,S6_healthy,errorCode=-1,errorName=BASELINE_ABORTS_NO_DIAGNOSTICS
+=== cp_solver_verify done ===

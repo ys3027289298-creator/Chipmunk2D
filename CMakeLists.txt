@@ -56,12 +56,22 @@ if(NOT MSVC)
   if(FORCE_CLANG_BLOCKS)
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fblocks")
   endif()
-  set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -ffast-math") # extend release-profile with fast-math
+	# NOTE: -ffast-math was removed deliberately. It implies -ffinite-math-only,
+	# which makes every INFINITY/NaN comparison constant-fold as "finite". The
+	# engine relies on INFINITY sentinels (e.g. cpSpace.sleepTimeThreshold,
+	# infinite mass bodies) and NaN self-inequality for sanity checks. With
+	# -ffast-math those tests miscompile, turning the sleeping component pass in
+	# cpSpaceProcessComponents() into an infinite loop. See output/docs/.
+	set(CMAKE_C_FLAGS_RELEASE "${CMAKE_C_FLAGS_RELEASE} -fno-fast-math")
   set(CMAKE_C_FLAGS_DEBUG "${CMAKE_C_FLAGS_DEBUG} -Wall") # extend debug-profile with -Wall
 endif()
 
 add_subdirectory(src)
 
 if(BUILD_DEMOS)
-  add_subdirectory(demo)
+	add_subdirectory(demo)
 endif()
+
+# Headless solver verification suite (always available, independent of GLFW).
+enable_testing()
+add_subdirectory(tests)

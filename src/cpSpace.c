@@ -129,6 +129,13 @@ cpSpaceInit(cpSpace *space)
 #endif
 
 	space->iterations = 10;
+
+	// Install the legacy-equivalent solver pipeline configuration.
+	space->solverConfig = cpSolverConfigDefault();
+	space->solverConfig.iterations = 10;
+	space->lastSolverError = CP_SOLVER_OK;
+	space->lastIterationCount = 0;
+	space->lastResidualVelocity = 0.0;
 	
 	space->gravity = cpvzero;
 	space->damping = 1.0f;
@@ -242,6 +249,7 @@ cpSpaceSetIterations(cpSpace *space, int iterations)
 {
 	cpAssertHard(iterations > 0, "Iterations must be positive and non-zero.");
 	space->iterations = iterations;
+	space->solverConfig.iterations = iterations;
 }
 
 cpVect
@@ -309,6 +317,7 @@ void
 cpSpaceSetCollisionSlop(cpSpace *space, cpFloat collisionSlop)
 {
 	space->collisionSlop = collisionSlop;
+	space->solverConfig.slop = collisionSlop;
 }
 
 cpFloat

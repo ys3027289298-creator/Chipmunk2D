@@ -360,6 +360,11 @@ cpSpaceStep(cpSpace *space, cpFloat dt)
 	arbiters->num = 0;
 
 	cpSpaceLock(space); {
+		// Reset per-step diagnostics before any integration work.
+		space->lastSolverError = CP_SOLVER_OK;
+		space->lastIterationCount = 0;
+		space->lastResidualVelocity = 0.0;
+
 		// Integrate positions
 		for(int i=0; i<bodies->num; i++){
 			cpBody *body = (cpBody *)bodies->arr[i];
@@ -382,9 +387,10 @@ cpSpaceStep(cpSpace *space, cpFloat dt)
 		// Prestep the arbiters and constraints.
 		cpFloat slop = space->collisionSlop;
 		cpFloat biasCoef = 1.0f - cpfpow(space->collisionBias, dt);
-		for(int i=0; i<arbiters->num; i++){
-			cpArbiterPreStep((cpArbiter *)arbiters->arr[i], dt, slop, biasCoef);
-		}
+		space->solverConfig.baumgarteBias = biasCoef;
+		space->solverConfig.slop = slop;
+		space->solverConfig.iterations = space->iterations;
+		cpSolverPrestepArbiters(space, dt, biasCoef);
 
 		for(int i=0; i<constraints->num; i++){
 			cpConstraint *constraint = (cpConstraint *)constraints->arr[i];
@@ -402,27 +408,35 @@ cpSpaceStep(cpSpace *space, cpFloat dt)
 			cpBody *body = (cpBody *)bodies->arr[i];
 			body->velocity_func(body, gravity, damping, dt);
 		}
+
+		// Numerical validation of body state (NaN / Inf / invalid mass) and of
+		// contact mass ratios. Errors are recorded, not fatal.
+		cpSolverValidateBodies(space);
+		cpSolverValidateArbiters(space);
 		
-		// Apply cached impulses
+		// Warm starting: apply cached contact and joint impulses.
 		cpFloat dt_coef = (prev_dt == 0.0f ? 0.0f : dt/prev_dt);
-		for(int i=0; i<arbiters->num; i++){
-			cpArbiterApplyCachedImpulse((cpArbiter *)arbiters->arr[i], dt_coef);
-		}
+		cpSolverWarmStart(space, dt_coef);
 		
-		for(int i=0; i<constraints->num; i++){
-			cpConstraint *constraint = (cpConstraint *)constraints->arr[i];
-			constraint->klass->applyCachedImpulse(constraint, dt_coef);
-		}
-		
-		// Run the impulse solver.
-		for(int i=0; i<space->iterations; i++){
-			for(int j=0; j<arbiters->num; j++){
-				cpArbiterApplyImpulse((cpArbiter *)arbiters->arr[j]);
-			}
-				
-			for(int j=0; j<constraints->num; j++){
-				cpConstraint *constraint = (cpConstraint *)constraints->arr[j];
-				constraint->klass->applyImpulse(constraint, dt);
+		// Run the configurable iterative impulse solver. The default
+		// configuration executes exactly the legacy contact/joint sweeps.
+		cpSolverRunIterations(space);
+
+		// Post-solve NaN impulse validation.
+		if(space->lastSolverError == CP_SOLVER_OK){
+			for(int i=0; i<arbiters->num; i++){
+				cpArbiter *arb = (cpArbiter *)arbiters->arr[i];
+				for(int k=0; k<arb->count; k++){
+					struct cpContact *con = &arb->contacts[k];
+					if(
+						con->jnAcc != con->jnAcc ||
+						con->jtAcc != con->jtAcc ||
+						con->jBias != con->jBias
+					){
+						cpSolverReportError(space, CP_SOLVER_NAN_IMPULSE);
+						break;
+					}
+				}
 			}
 		}
 		
